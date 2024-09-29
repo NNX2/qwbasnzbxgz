@@ -25,7 +25,7 @@ local function ensureBodyVelocity(vehicle)
         bv.Parent = vehicle
     end
 end
-
+        print("print")
 -- Fonction pour activer ou désactiver le vol
 local function toggleFlight()
     vehicle = findPlayerVehicle()  -- Trouver le véhicule du joueur
