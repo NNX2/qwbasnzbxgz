@@ -2,10 +2,21 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
-local vehicle = nil -- Vous devez définir comment obtenir le véhicule du joueur
+local vehicle = nil -- Initialisation de la variable du véhicule
 local flying = false
 local originalSpeed = 20 -- Vitesse originale du véhicule
 local boostedSpeed = 30 -- Vitesse augmentée en mode vol
+
+-- Fonction pour trouver le véhicule du joueur
+local function findPlayerVehicle()
+    local vehicles = game:GetService("Workspace").Vehicles
+    for _, v in pairs(vehicles:GetChildren()) do
+        if v:IsA("Model") and v:FindFirstChild("Seat") and v.Seat.Occupant and v.Seat.Occupant.Parent == player.Character then
+            return v
+        end
+    end
+    return nil
+end
 
 -- Fonction pour assurer que BodyVelocity existe
 local function ensureBodyVelocity(vehicle)
@@ -17,6 +28,7 @@ end
 
 -- Fonction pour activer ou désactiver le vol
 local function toggleFlight()
+    vehicle = findPlayerVehicle()  -- Trouver le véhicule du joueur
     if not vehicle then
         print("Aucun véhicule détecté")
         return
@@ -47,7 +59,3 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         toggleFlight()
     end
 end)
-
--- Initialisation
--- Vous devez définir comment le joueur obtient son véhicule ici
--- Assurez-vous que vehicle est une référence valide au véhicule du joueur avant d'activer le script
