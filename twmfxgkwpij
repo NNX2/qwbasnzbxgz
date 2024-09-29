@@ -7,17 +7,6 @@ local flying = false
 local originalSpeed = 20 -- Vitesse originale du véhicule
 local boostedSpeed = 30 -- Vitesse augmentée en mode vol
 
--- Fonction pour trouver le véhicule du joueur
-local function findPlayerVehicle()
-    local vehicles = game:GetService("Workspace").Vehicles
-    for _, v in pairs(vehicles:GetChildren()) do
-        if v:IsA("Model") and v:FindFirstChild("Seat") and v.Seat.Occupant and v.Seat.Occupant.Parent == player.Character then
-            return v
-        end
-    end
-    return nil
-end
-
 -- Fonction pour assurer que BodyVelocity existe
 local function ensureBodyVelocity(vehicle)
     if not vehicle:FindFirstChild("BodyVelocity") then
@@ -25,10 +14,9 @@ local function ensureBodyVelocity(vehicle)
         bv.Parent = vehicle
     end
 end
-        print("print")
+
 -- Fonction pour activer ou désactiver le vol
 local function toggleFlight()
-    vehicle = findPlayerVehicle()  -- Trouver le véhicule du joueur
     if not vehicle then
         print("Aucun véhicule détecté")
         return
@@ -52,6 +40,25 @@ local function toggleFlight()
         end
     end
 end
+
+-- Écouter les changements dans les sièges des véhicules
+local function checkSeat()
+    local vehicles = game.Workspace.Vehicles
+    for _, v in pairs(vehicles:GetChildren()) do
+        if v:IsA("Model") and v:FindFirstChild("Seat") then
+            local seat = v.Seat
+            if seat.Occupant and seat.Occupant.Parent == player.Character then
+                vehicle = v
+                break
+            else
+                vehicle = nil
+            end
+        end
+    end
+end
+
+-- Vérifie continuellement le siège
+game:GetService("RunService").Heartbeat:Connect(checkSeat)
 
 -- Écouter l'appui sur la touche "y"
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
