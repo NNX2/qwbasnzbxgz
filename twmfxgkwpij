@@ -1,68 +1,55 @@
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
+-- Script pour activer/désactiver le mode vol sur un véhicule Roblox avec la touche "Y"
+-- Ce script est destiné à être exécuté par un exploitateur pour un usage de test uniquement.
 
-local player = Players.LocalPlayer
-local vehicle = nil -- Initialisation de la variable du véhicule
+-- Variables
+local player = game.Players.LocalPlayer
+local vehicle = nil -- La variable sera définie automatiquement au début du script
 local flying = false
-local originalSpeed = 20 -- Vitesse originale du véhicule
-local boostedSpeed = 30 -- Vitesse augmentée en mode vol
 
--- Fonction pour assurer que BodyVelocity existe
-local function ensureBodyVelocity(vehicle)
-    if not vehicle:FindFirstChild("BodyVelocity") then
-        local bv = Instance.new("BodyVelocity")
-        bv.Parent = vehicle
-    end
-end
+-- Vitesse de vol
+local flySpeed = 50
 
--- Fonction pour activer ou désactiver le vol
-local function toggleFlight()
-    if not vehicle then
-        print("Aucun véhicule détecté")
-        return
-    end
-
-    ensureBodyVelocity(vehicle)  -- S'assurer que BodyVelocity existe
-    flying = not flying
-    local bv = vehicle:FindFirstChild("BodyVelocity")
-    
-    if flying then
-        bv.Velocity = Vector3.new(0, 20, 0)
-        bv.MaxForce = Vector3.new(0, 400000, 0)
-        if vehicle:FindFirstChild("Configuration") and vehicle.Configuration:FindFirstChild("Speed") then
-            vehicle.Configuration.Speed.Value = boostedSpeed
-        end
-    else
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.MaxForce = Vector3.new(0, 0, 0)
-        if vehicle:FindFirstChild("Configuration") and vehicle.Configuration:FindFirstChild("Speed") then
-            vehicle.Configuration.Speed.Value = originalSpeed
-        end
-    end
-end
-
--- Écouter les changements dans les sièges des véhicules
-local function checkSeat()
-    local vehicles = game.Workspace.Vehicles
-    for _, v in pairs(vehicles:GetChildren()) do
-        if v:IsA("Model") and v:FindFirstChild("Seat") then
-            local seat = v.Seat
-            if seat.Occupant and seat.Occupant.Parent == player.Character then
-                vehicle = v
-                break
-            else
-                vehicle = nil
+-- Fonction pour trouver le véhicule que le joueur utilise
+local function getVehicle()
+    for _, part in pairs(workspace:GetChildren()) do
+        if part:IsA("Model") and part:FindFirstChild("Humanoid") then
+            -- Vérifie si le joueur est à l'intérieur du véhicule
+            if part:FindFirstChild("Humanoid").SeatPart and part:FindFirstChild("Humanoid").SeatPart.Occupant and part:FindFirstChild("Humanoid").SeatPart.Occupant.Parent == player.Character then
+                return part
             end
         end
     end
+    return nil
 end
 
--- Vérifie continuellement le siège
-game:GetService("RunService").Heartbeat:Connect(checkSeat)
+-- Fonction pour activer le vol
+local function startFlying()
+    local bodyVelocity = Instance.new("BodyVelocity", vehicle.PrimaryPart)
+    bodyVelocity.Velocity = Vector3.new(0, flySpeed, 0)
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+end
 
--- Écouter l'appui sur la touche "y"
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if not gameProcessedEvent and input.KeyCode == Enum.KeyCode.Y then
-        toggleFlight()
+-- Fonction pour arrêter le vol
+local function stopFlying()
+    for _, v in pairs(vehicle.PrimaryPart:GetChildren()) do
+        if v:IsA("BodyVelocity") then
+            v:Destroy()
+        end
+    end
+end
+
+-- Détection de la touche "Y"
+game:GetService("UserInputService").InputBegan:Connect(function(input, isProcessed)
+    if isProcessed then return end -- Évite les conflits avec d'autres scripts
+    if input.KeyCode == Enum.KeyCode.Y then
+        vehicle = getVehicle()
+        if vehicle then
+            flying = not flying
+            if flying then
+                startFlying()
+            else
+                stopFlying()
+            end
+        end
     end
 end)
